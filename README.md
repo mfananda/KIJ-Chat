@@ -1,2 +1,3 @@
 # KIJ-Chat
-Securing the Insecure Chat
+Keamanan dan Informasi dan Jaringan
+Tugas mengamankan sistem chat
