@@ -1,9 +1,20 @@
 package kij_chat_server;
 
+import java.io.DataInputStream;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import sun.misc.BASE64Decoder;
 
 /** original ->http://www.dreamincode.net/forums/topic/262304-simple-client-and-server-chat-program/
  * 
@@ -174,28 +185,55 @@ public class Client implements Runnable{
                                         if (input.split(" ")[0].toLowerCase().equals("gm") == true) {
                                             String[] vals = input.split(" ");
                                             
+                                            String messageOut = "";
+                                            for (int j = 2; j<vals.length; j++) {
+                                                messageOut += vals[j] + " ";
+                                            }
+                                                
+                                            Date date = new Date();
+                                            DateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
+                                            String tanggal = dateFormat.format(date);
+                                            String key_coy = String.format("%-16s",tanggal).replace(' ','0');
+                                            byte [] key1 = key_coy.getBytes();
+                                            //System.out.print(key_coy);
+                                            
+                                            SecretKeySpec skeySpec=new SecretKeySpec(key1,"AES");
+                                            Cipher AESCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                                            AESCipher.init(Cipher.DECRYPT_MODE, skeySpec);
+                                            decordedValue = new BASE64Decoder().decodeBuffer(messageOut);
+                                            byte[] decrypt = AESCipher.doFinal(decordedValue);
+                                            String decryptedValue = new String(decrypt);
+                                            
+                                            //System.out.println(decryptedValue);
+                                            
+                                            
                                             boolean exist = false;
                                             
                                             for(Pair<String, String> selGroup : _grouplist) {
-                                                if (selGroup.getSecond().equals(this.username)) {
+                                                if (selGroup.getSecond().equals(vals[1])) {
                                                     exist = true;
                                                 }
                                             }
                                             
                                             if (exist == true) {
+                                                System.out.println(this.username + " to " + vals[1] + " group: " + decryptedValue);
                                                 for(Pair<String, String> selGroup : _grouplist) {
                                                     if (selGroup.getFirst().equals(vals[1])) {
+                                                        
                                                         for(Pair<Socket, String> cur : _loginlist) {
-                                                            if (cur.getSecond().equals(selGroup.getSecond()) && !cur.getFirst().equals(socket)) {
+                                                            if (cur.getSecond().equals(selGroup.getSecond())) {
+                                                                
+//                                                                String messageOut = "";
+//                                                                for (int j = 2; j<vals.length; j++) {
+//                                                                    messageOut += vals[j] + " ";
+//                                                                }
                                                                 PrintWriter outDest = new PrintWriter(cur.getFirst().getOutputStream());
-                                                                String messageOut = "";
-                                                                for (int j = 2; j<vals.length; j++) {
-                                                                    messageOut += vals[j] + " ";
-                                                                }
-                                                                System.out.println(this.username + " to " + vals[1] + " group: " + messageOut);
-                                                                outDest.println(this.username + " @ " + vals[1] + " group: " + messageOut);
+                                                                outDest.println(this.username + " @ " + vals[1] + " group: " + decryptedValue);
                                                                 outDest.flush();
+                                                                
+                                                                
                                                             }
+                                                              
                                                         }
                                                     }
                                                 }
