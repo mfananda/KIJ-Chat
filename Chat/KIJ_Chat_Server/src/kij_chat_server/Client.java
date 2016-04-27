@@ -45,7 +45,39 @@ public class Client implements Runnable{
 //					System.out.println("Client Said: " + input);//PRINT IT OUT TO THE SCREEN
 //					out.println("You Said: " + input);//RESEND IT TO THE CLIENT
 //					out.flush();//FLUSH THE STREAM
-                                        
+                                        if (input.split(" ")[0].toLowerCase().equals("login") == true) {
+                                            String[] vals = input.split(" ");
+                                            
+                                            //System.out.print("coba1");
+                                            //System.out.print(this.socket);
+                                            //Socket s = new Socket("localhost", 7777);
+                                            
+                                            //System.out.print("coba2");
+                                            String key = vals[1];
+                                            byte[] pass = vals[2].getBytes("UTF-8");
+                                            
+                                            String keyData = String.format("%-16s",key).replace(' ','0');//username+ zeropadding 16 char
+                                            byte[] key_fix = keyData.getBytes("UTF-8");
+                                            
+                                            String plain_IV = new StringBuffer(key).reverse().toString();
+                                            //System.out.print(plain_IV);
+                                            String ivData = String.format("%-16s",plain_IV).replace(' ','0');//reverse username + zeropadding 16 char
+                                            byte[] iv = ivData.getBytes("UTF-8");
+                                            
+                                            SecretKeySpec skeySpec=new SecretKeySpec(key_fix,"AES");
+                                            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+                                            Cipher AESCipher = Cipher.getInstance("AES/CFB/NoPadding");
+                                            AESCipher.init(Cipher.DECRYPT_MODE, skeySpec, ivSpec);
+                                            decordedValue = new BASE64Decoder().decodeBuffer(vals[2]);
+                                            byte[] decrypt = AESCipher.doFinal(decordedValue); //have to do this to save the byte[]
+                                            String decryptedValue = new String(decrypt);
+                                            
+//                                            System.out.println(key_fix);
+//                                            System.out.println(iv);
+//                                            System.out.println(skeySpec);
+//                                            System.out.println(ivSpec);
+//                                            System.out.println(decryptedValue);
+                                            //System.out.println(decrypt.toString());
                                         // param LOGIN <userName> <pass>
                                         if (input.split(" ")[0].toLowerCase().equals("login") == true) {
                                             String[] vals = input.split(" ");
