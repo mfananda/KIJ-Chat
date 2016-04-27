@@ -71,6 +71,44 @@ public class Write implements Runnable {
 			while (keepGoing)//WHILE THE PROGRAM IS RUNNING
 			{						
 				String input = chat.nextLine();	//SET NEW VARIABLE input TO THE VALUE OF WHAT THE CLIENT TYPED IN
+				String encryptedValue =null;
+                                String key=null;
+                                String command=null;
+                                
+                                if (input.split(" ")[0].toLowerCase().equals("login") == true) {
+                                            String[] vals = input.split(" ");
+                                            command = vals[0];
+                                            String plain_pass = vals[2];
+                                            key = vals[1];      
+                                            byte[] plaintext = plain_pass.getBytes("UTF-8");
+                                            
+                                            String keyData = String.format("%-16s",key).replace(' ','0'); //username+ zeropadding 16 char
+                                            byte[] key_fix = keyData.getBytes("UTF-8");
+                                            
+                                            String plain_IV = new StringBuffer(key).reverse().toString();
+                                            //System.out.print(plain_IV);
+                                            String ivData = String.format("%-16s",plain_IV).replace(' ','0');//reverse username + zeropadding 16char
+                                            byte[] iv = ivData.getBytes("UTF-8");
+                                           
+                                            
+                                            SecretKeySpec skeySpec=new SecretKeySpec(key_fix,"AES");
+                                            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+                                            Cipher AESCipher = Cipher.getInstance("AES/CFB/NoPadding");
+                                            AESCipher.init(Cipher.ENCRYPT_MODE, skeySpec, ivSpec);
+                                            byte[] ciphertext = AESCipher.doFinal(plaintext); 
+                                            encryptedValue = new BASE64Encoder().encode(ciphertext); //have to do this to save the byte[]
+                                            input = vals[0] + " " + vals[1] + " " + ciphertext ;
+                                            //Socket s = new Socket("localhost", 7777);
+                                            //DataOutputStream dOut = new DataOutputStream(this.socket.getOutputStream());
+                                            //dOut.writeInt(iv.length);
+                                            //dOut.write(iv);
+//                                            System.out.println(key_fix);
+//                                            System.out.println(iv);
+//                                            System.out.println(skeySpec);
+//                                            System.out.println(ivSpec);
+//                                            System.out.println(input);
+                                            out.println(command + " " + key + " " + encryptedValue);//SEND IT TO THE SERVER             
+                                }
                                 if (input.split(" ")[0].toLowerCase().equals("pm") == true)
                                 {
                                     String huruf="";
