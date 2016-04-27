@@ -243,20 +243,41 @@ public class Client implements Runnable{
                                         }
                                         
                                         // param BM <message>
-                                        if (input.split(" ")[0].toLowerCase().equals("bm") == true) {
+                                                                 if (input.split(" ")[0].toLowerCase().equals("bm") == true) {
                                             String[] vals = input.split(" ");
+                                            String messageOut = "";
+                                            for (int j = 1; j<vals.length; j++) {
+                                                messageOut += vals[j] + " ";
+                                            }
+                                                
+                                            Date date = new Date();
+                                            DateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
+                                            String tanggal = dateFormat.format(date);
+                                            String key_coy = String.format("%-16s",tanggal).replace(' ','0');
+                                            byte [] key1 = key_coy.getBytes();
+                                            //System.out.print(key_coy);
                                             
+                                            SecretKeySpec skeySpec=new SecretKeySpec(key1,"AES");
+                                            Cipher AESCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                                            AESCipher.init(Cipher.DECRYPT_MODE, skeySpec);
+                                            decordedValue = new BASE64Decoder().decodeBuffer(messageOut);
+                                            byte[] decrypt = AESCipher.doFinal(decordedValue);
+                                            String decryptedValue = new String(decrypt);
+                                            
+                                            //System.out.println(decryptedValue);
+                                            System.out.println(this.username + " to alls: " + decryptedValue);
                                             for(Pair<Socket, String> cur : _loginlist) {
-                                                if (!cur.getFirst().equals(socket)) {
-                                                    PrintWriter outDest = new PrintWriter(cur.getFirst().getOutputStream());
-                                                    String messageOut = "";
-                                                    for (int j = 1; j<vals.length; j++) {
-                                                        messageOut += vals[j] + " ";
-                                                    }
-                                                    System.out.println(this.username + " to alls: " + messageOut);
-                                                    outDest.println(this.username + " <BROADCAST>: " + messageOut);
-                                                    outDest.flush();
-                                                }
+                                                PrintWriter outDest = new PrintWriter(cur.getFirst().getOutputStream());
+                                                outDest.println(this.username + " <BROADCAST>: " + decryptedValue);
+                                                outDest.flush();
+//                                                if (!cur.getFirst().equals(socket)) {
+//                                                    
+////                                                    String messageOut = "";
+////                                                    for (int j = 1; j<vals.length; j++) {
+////                                                        messageOut += vals[j] + " ";
+////                                                    }
+//                                                    
+//                                                }
                                             }
                                         }
 				}
