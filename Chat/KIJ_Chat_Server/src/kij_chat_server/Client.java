@@ -15,7 +15,6 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import sun.misc.BASE64Decoder;
-
 /** original ->http://www.dreamincode.net/forums/topic/262304-simple-client-and-server-chat-program/
  * 
  * @author santen-suru
@@ -31,6 +30,10 @@ public class Client implements Runnable{
         private ArrayList<Pair<Socket,String>> _loginlist;
         private ArrayList<Pair<String,String>> _userlist;
         private ArrayList<Pair<String,String>> _grouplist;
+        
+        
+        
+        
 	
 	public Client(Socket s, ArrayList<Pair<Socket,String>> _loginlist, ArrayList<Pair<String,String>> _userlist, ArrayList<Pair<String,String>> _grouplist)
 	{
@@ -45,17 +48,30 @@ public class Client implements Runnable{
 	{
 		try //HAVE TO HAVE THIS FOR THE in AND out VARIABLES
 		{
+                        
+//                        InputStream ini = socket.getInputStream();
+//                        DataInputStream dIn = new DataInputStream(ini);
+//                        int length = dIn.readInt();
+//                        byte[] iv = new byte[length];
+//                        if(length>0){
+//                            dIn.readFully(iv, 0, iv.length);
+//                        }
+//                        //System.out.println(iv);
+                        
 			Scanner in = new Scanner(socket.getInputStream());//GET THE SOCKETS INPUT STREAM (THE STREAM THAT YOU WILL GET WHAT THEY TYPE FROM)
 			PrintWriter out = new PrintWriter(socket.getOutputStream());//GET THE SOCKETS OUTPUT STREAM (THE STREAM YOU WILL SEND INFORMATION TO THEM FROM)
 			
 			while (true)//WHILE THE PROGRAM IS RUNNING
 			{		
+                                byte[] decordedValue=null;
 				if (in.hasNext())
 				{
 					String input = in.nextLine();//IF THERE IS INPUT THEN MAKE A NEW VARIABLE input AND READ WHAT THEY TYPED
 //					System.out.println("Client Said: " + input);//PRINT IT OUT TO THE SCREEN
 //					out.println("You Said: " + input);//RESEND IT TO THE CLIENT
 //					out.flush();//FLUSH THE STREAM
+                                        //System.out.println("Input: " + input);
+                                        // param LOGIN <userName> <pass>
                                         if (input.split(" ")[0].toLowerCase().equals("login") == true) {
                                             String[] vals = input.split(" ");
                                             
@@ -67,12 +83,12 @@ public class Client implements Runnable{
                                             String key = vals[1];
                                             byte[] pass = vals[2].getBytes("UTF-8");
                                             
-                                            String keyData = String.format("%-16s",key).replace(' ','0');//username+ zeropadding 16 char
+                                            String keyData = String.format("%-16s",key).replace(' ','0');
                                             byte[] key_fix = keyData.getBytes("UTF-8");
                                             
                                             String plain_IV = new StringBuffer(key).reverse().toString();
                                             //System.out.print(plain_IV);
-                                            String ivData = String.format("%-16s",plain_IV).replace(' ','0');//reverse username + zeropadding 16 char
+                                            String ivData = String.format("%-16s",plain_IV).replace(' ','0');
                                             byte[] iv = ivData.getBytes("UTF-8");
                                             
                                             SecretKeySpec skeySpec=new SecretKeySpec(key_fix,"AES");
@@ -80,7 +96,7 @@ public class Client implements Runnable{
                                             Cipher AESCipher = Cipher.getInstance("AES/CFB/NoPadding");
                                             AESCipher.init(Cipher.DECRYPT_MODE, skeySpec, ivSpec);
                                             decordedValue = new BASE64Decoder().decodeBuffer(vals[2]);
-                                            byte[] decrypt = AESCipher.doFinal(decordedValue); //have to do this to save the byte[]
+                                            byte[] decrypt = AESCipher.doFinal(decordedValue);
                                             String decryptedValue = new String(decrypt);
                                             
 //                                            System.out.println(key_fix);
@@ -89,8 +105,7 @@ public class Client implements Runnable{
 //                                            System.out.println(ivSpec);
 //                                            System.out.println(decryptedValue);
                                             //System.out.println(decrypt.toString());
-                                        // param LOGIN <userName> <pass>
-                                        if (this._userlist.contains(new Pair(vals[1], decryptedValue)) == true) { //edit bug
+                                            if (this._userlist.contains(new Pair(vals[1], decryptedValue)) == true) {
                                                 if (this.login == false) {
                                                     this._loginlist.add(new Pair(this.socket, vals[1]));
                                                     this.username = vals[1];
@@ -128,20 +143,39 @@ public class Client implements Runnable{
                                         
                                         // param PM <userName dst> <message>
                                         if (input.split(" ")[0].toLowerCase().equals("pm") == true) {
-                                            String[] vals = input.split(" ");
+                                            String vals[] = input.split(" ");
+                                            String messageOut = "";
+                                            for (int j = 2; j<vals.length; j++) {
+                                                messageOut += vals[j] + " ";
+                                            }
+                                            
+                                            
+                                            Date date = new Date();
+                                            DateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
+                                            String tanggal = dateFormat.format(date);
+                                            //System.out.println("Date converted to String: " + strDate);
+                                            byte [] key = tanggal.getBytes();
+                                            Cipher rc4 = Cipher.getInstance("RC4");
+                                            SecretKeySpec rc4Key = new SecretKeySpec(key, "RC4");                                      
+                                            Cipher rc4Decrypt = Cipher.getInstance("RC4");
+                                            rc4Decrypt.init(Cipher.DECRYPT_MODE, rc4Key);
+                                            decordedValue = new BASE64Decoder().decodeBuffer(messageOut);
+                                            //byte[] clearText2 = rc4Decrypt.update(decordedValue);
+                                            //String decryptedValue = new String(clearText2);
+                                            byte[] decrypt = rc4Decrypt.update(decordedValue);
+                                            String decryptedValue = new String(decrypt);
                                             
                                             boolean exist = false;
                                             
+                                            System.out.println(this.username + " pm to " + vals[1] + " " + decryptedValue);
                                             for(Pair<Socket, String> cur : _loginlist) {
+                                                System.out.println(cur.getSecond());
                                                 if (cur.getSecond().equals(vals[1])) {
                                                     PrintWriter outDest = new PrintWriter(cur.getFirst().getOutputStream());
-                                                    String messageOut = "";
-                                                    for (int j = 2; j<vals.length; j++) {
-                                                        messageOut += vals[j] + " ";
-                                                    }
-                                                    System.out.println(this.username + " to " + vals[1] + " : " + messageOut);
-                                                    outDest.println(this.username + ": " + messageOut);
+                                                    outDest.println(this.username + ": " + decryptedValue);
                                                     outDest.flush();
+                                                    //System.out.println(this.username + " to " + vals[1] + " : " + messageOut);
+                                                    
                                                     exist = true;
                                                 }
                                             }
@@ -243,7 +277,7 @@ public class Client implements Runnable{
                                         }
                                         
                                         // param BM <message>
-                                                                 if (input.split(" ")[0].toLowerCase().equals("bm") == true) {
+                                        if (input.split(" ")[0].toLowerCase().equals("bm") == true) {
                                             String[] vals = input.split(" ");
                                             String messageOut = "";
                                             for (int j = 1; j<vals.length; j++) {
