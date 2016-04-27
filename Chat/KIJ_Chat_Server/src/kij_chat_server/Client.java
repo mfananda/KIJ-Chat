@@ -90,15 +90,13 @@ public class Client implements Runnable{
 //                                            System.out.println(decryptedValue);
                                             //System.out.println(decrypt.toString());
                                         // param LOGIN <userName> <pass>
-                                        if (input.split(" ")[0].toLowerCase().equals("login") == true) {
-                                            String[] vals = input.split(" ");
-                                            
-                                            if (this._userlist.contains(new Pair(vals[1], vals[2])) == true) {
+                                        if (this._userlist.contains(new Pair(vals[1], decryptedValue)) == true) { //edit bug
                                                 if (this.login == false) {
                                                     this._loginlist.add(new Pair(this.socket, vals[1]));
                                                     this.username = vals[1];
                                                     this.login = true;
                                                     System.out.println("Users count: " + this._loginlist.size());
+                                                    //System.out.println(this.username);
                                                     out.println("SUCCESS login");
                                                     out.flush();
                                                 } else {
