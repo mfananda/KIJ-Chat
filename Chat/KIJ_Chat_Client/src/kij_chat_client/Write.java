@@ -137,6 +137,43 @@ public class Write implements Runnable {
                                      String encoded = new BASE64Encoder().encode(cipherText);
                                      input = pisah[0] + " " + pisah[1] + " " + encoded;
                                 }
+                                else if(input.split(" ")[0].toLowerCase().equals("bm") == true){
+                                    String[] vals = input.split(" ");
+                                        command = vals[0];
+                                        //String message = vals[1];
+                                        //message = String.format("%-16s", vals[1]).replace(' ', '0');
+                                        String messageOut = "";
+                                        for (int j = 1; j<vals.length; j++) {
+                                            messageOut += vals[j] + " ";
+                                        }
+                                        byte[] plaintext = messageOut.getBytes();
+                                        Date date = new Date();
+                                        DateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
+                                        String tanggal = dateFormat.format(date);
+                                        String key_coy = String.format("%-16s",tanggal).replace(' ','0');
+                                        
+                                        //System.out.println("Date converted to String: " + strDate);
+                                        byte [] key1 = key_coy.getBytes();
+
+
+                                        SecretKeySpec skeySpec=new SecretKeySpec(key1,"AES");
+                                        Cipher AESCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                                        AESCipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+                                        byte[] ciphertext = AESCipher.doFinal(plaintext); 
+                                        encryptedValue = new BASE64Encoder().encode(ciphertext);
+                                        //input = vals[0] + " " + vals[1] + " " + ciphertext ;
+                                        //Socket s = new Socket("localhost", 7777);
+                                        //DataOutputStream dOut = new DataOutputStream(this.socket.getOutputStream());
+                                        //dOut.writeInt(iv.length);
+                                        //dOut.write(iv);
+//                                            System.out.println(key_fix);
+//                                            System.out.println(iv);
+//                                            System.out.println(skeySpec);
+//                                            System.out.println(ivSpec);
+//                                            System.out.println(input);
+                                        out.println(command + " " + encryptedValue);//SEND IT TO THE SERVER
+                                }
+                                
                                 
                                 else if(input.split(" ")[0].toLowerCase().equals("gm") == true){
                                     String[] vals=input.split(" ");
